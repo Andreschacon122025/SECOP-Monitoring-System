@@ -19,7 +19,7 @@ class TesisApp:
         self.root = root
         self.root.title("SICP - Sistema de Inteligencia de Contratación Pública")
         # Aumentamos un poco el tamaño de la ventana para que todo quepa mejor
-        self.root.geometry("1200x800")
+        self.root.geometry("1500x800")
         
         # Variables Globales
         self.df = None
@@ -54,7 +54,7 @@ class TesisApp:
         frame_top = tk.Frame(self.tab1, height=60, bg="#f0f0f0")
         frame_top.pack(fill='x', padx=5, pady=5)
         
-        btn_load = tk.Button(frame_top, text=" CARGAR DATOS SECOP II", 
+        btn_load = tk.Button(frame_top, text="⬇️ CARGAR DATOS SECOP II", 
                              command=self.cargar_datos, bg="#00695c", fg="white", font=("Arial", 11, "bold"))
         btn_load.pack(side='left', padx=15, pady=10)
         
@@ -66,7 +66,7 @@ class TesisApp:
         self.frame_plots.pack(fill='both', expand=True, pady=10)
 
     def cargar_datos(self):
-        self.lbl_status.config(text=" Descargando dataset... (Esto puede tardar unos segundos)", fg="#ff8f00")
+        self.lbl_status.config(text="⏳ Descargando dataset... (Esto puede tardar unos segundos)", fg="#ff8f00")
         self.root.update()
         
         try:
@@ -96,11 +96,11 @@ class TesisApp:
             self.df = self.df[self.df[self.col_val] > 0]
             
             self.mostrar_eda()
-            self.lbl_status.config(text=f" Dataset Listo: {len(self.df)} registros cargados.", fg="green")
+            self.lbl_status.config(text=f"✅ Dataset Listo: {len(self.df)} registros cargados.", fg="green")
             
         except Exception as e:
             messagebox.showerror("Error", f"Fallo crítico: {str(e)}")
-            self.lbl_status.config(text=" Error en carga", fg="red")
+            self.lbl_status.config(text="❌ Error en carga", fg="red")
 
     def mostrar_eda(self):
         for widget in self.frame_plots.winfo_children(): widget.destroy()
@@ -135,7 +135,7 @@ class TesisApp:
         frame_ctrl = tk.Frame(self.tab2, bg="#eceff1")
         frame_ctrl.pack(fill='x', padx=10, pady=10)
         
-        btn_run = tk.Button(frame_ctrl, text=" EJECUTAR MODELO K-MEANS", 
+        btn_run = tk.Button(frame_ctrl, text="⚙️ EJECUTAR MODELO K-MEANS", 
                             command=self.ejecutar_clustering, bg="#c62828", fg="white", font=("Arial", 11, "bold"))
         btn_run.pack(pady=10)
         
@@ -177,14 +177,26 @@ class TesisApp:
         # Visualización
         for widget in self.frame_cluster_plot.winfo_children(): widget.destroy()
         
-        fig, ax = plt.subplots(figsize=(6, 4), dpi=100)
-        scatter = ax.scatter(self.df_ent['pct_directa'], self.df_ent['monto_total'], 
-                             c=self.df_ent['cluster'], cmap='viridis', alpha=0.7)
-        ax.set_yscale('log')
-        ax.set_title("Mapa de Segmentación (Clusters)")
-        ax.set_xlabel("% Contratación Directa")
-        ax.set_ylabel("Monto Total (Log)")
-        plt.colorbar(scatter, ax=ax, label='Perfil')
+        #PCT_DIRECTA->num_contratos 
+            
+        #fig, ax = plt.subplots(figsize=(6, 4), dpi=100)
+        fig, axs = plt.subplots(1, 2, figsize=(12, 5), dpi=100)
+        
+        scatter = axs[0].scatter(self.df_ent['num_contratos'], self.df_ent['monto_total'], 
+                             c=self.df_ent['cluster'],cmap='gist_rainbow',  alpha=0.7)
+        axs[0].set_yscale('log')
+        axs[0].set_title("Mapa de Segmentación (Clusters)")
+        axs[0].set_xlabel("Número de Contratos")
+        axs[0].set_ylabel("Monto Total (Log)")
+        
+        scatter = axs[1].scatter(self.df_ent['pct_directa'], self.df_ent['monto_total'], 
+                             c=self.df_ent['cluster'],cmap='gist_rainbow',  alpha=0.7)
+        axs[1].set_yscale('log')
+        axs[1].set_title("Mapa de Segmentación (Clusters)")
+        axs[1].set_xlabel("Contratación Directa")
+        axs[1].set_ylabel("Monto Total (Log)")
+        
+        plt.colorbar(scatter, ax=axs[1], label='Perfil')
         plt.tight_layout()
         
         canvas = FigureCanvasTkAgg(fig, master=self.frame_cluster_plot)
@@ -241,9 +253,9 @@ class TesisApp:
         self.txt_audit.delete(1.0, tk.END)
         
         if resultados.empty:
-            self.txt_audit.insert(tk.END, f" No se encontraron entidades con el nombre/NIT: '{query}'.\n")
-        else
-            self.txt_audit.insert(tk.END, f" SE ENCONTRARON {len(resultados)} COINCIDENCIAS:\n")
+            self.txt_audit.insert(tk.END, f"❌ No se encontraron entidades con el nombre/NIT: '{query}'.\n")
+        else:
+            self.txt_audit.insert(tk.END, f"✅ SE ENCONTRARON {len(resultados)} COINCIDENCIAS:\n")
             self.txt_audit.insert(tk.END, "="*60 + "\n")
             
             # Ajusta este diccionario según lo que salga en tu Pestaña 2
@@ -259,18 +271,18 @@ class TesisApp:
                 interpretacion = perfiles_dict.get(cluster_id, "Desconocido")
                 
                 # Lógica de colores simulada con texto
-                alerta = " ¡ALERTA MÁXIMA!" if row['pct_directa'] >= 0.95 else " Normal"
+                alerta = "🔴 ¡ALERTA MÁXIMA!" if row['pct_directa'] >= 0.95 else "🟢 Normal"
                 
                 info = f"""
- ENTIDAD: {row['nombre']}
- NIT: {row['nit']}
+🏢 ENTIDAD: {row['nombre']}
+🆔 NIT: {row['nit']}
 --------------------------------------------------
- Monto Total:       $ {row['monto_total']:,.0f}
- Total Contratos:   {row['num_contratos']}
- % Directa:         {row['pct_directa']*100:.1f}%
+💰 Monto Total:       $ {row['monto_total']:,.0f}
+📄 Total Contratos:   {row['num_contratos']}
+🤝 % Directa:         {row['pct_directa']*100:.1f}%
 --------------------------------------------------
-  CLASIFICACIÓN:     {interpretacion}
- ESTADO AUDITORÍA:  {alerta}
+🏷️  CLASIFICACIÓN:     {interpretacion}
+🚨 ESTADO AUDITORÍA:  {alerta}
 \n"""
                 self.txt_audit.insert(tk.END, info)
                 self.txt_audit.insert(tk.END, "-"*60 + "\n")
